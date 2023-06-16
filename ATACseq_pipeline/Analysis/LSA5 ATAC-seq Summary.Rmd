@@ -1,0 +1,125 @@
+---
+title: "Untitled"
+author: "Joanna Yeung"
+date: "3/15/2021"
+output: html_document
+---
+
+```{r}
+LSA5ATAC_summary <- read.table("/rugpfs/fs0/risc_lab/scratch/npagane/analysis/senescence/LSA/LSA5/ATACseqRunSummary.log",skip=38, header=T, skipNul = TRUE)
+
+LSA5ATAC_summary <- LSA5ATAC_summary[23:49, ]
+row.names(LSA5ATAC_summary) <- 1: nrow(LSA5ATAC_summary)
+
+LSA5ATAC_summary$SAMPLE <- factor(LSA5ATAC_summary$SAMPLE, levels=LSA5ATAC_summary$SAMPLE[c(1:6, 17:27, 7:16)])
+
+LSA5ATAC_summary <- LSA5ATAC_summary[c(1:6, 17:27, 7:16), ]
+
+LSA5ATAC_summary$TIMEPOINT <- c(rep("cycling", 3), rep("Quiescent", 3),rep("day3", 3),rep("day4", 3), rep("day6", 3), rep("day9", 2), rep("day12", 2), rep("day14", 3), rep("day21", 3), rep("day28", 2))
+
+LSA5ATAC_summary$TIMEPOINT <- factor(LSA5ATAC_summary$TIMEPOINT, levels=unique(LSA5ATAC_summary$TIMEPOINT)) 
+
+LSA5ATAC_summary$EXPERIMENT <- "LSA5"
+
+LSA5ATAC_summary$DRUG <- "Palbociclib"
+
+LSA5ATAC_summary$SEQUENCING_RUN <- "1-08-2020"
+```
+```{r}
+LSA5ATAC_summary2 <- read.table("/rugpfs/fs0/risc_lab/scratch/jyeung/LSA5/ATACseq_pipeline/ATACseqRunSummary.log",skip=38, header=T, skipNul = TRUE)
+
+LSA5ATAC_summary2 <- LSA5ATAC_summary2[25:51, ]
+LSA5ATAC_summary2 <- LSA5ATAC_summary2[c(1, 11, 21, 2, 12, 22, 3, 13, 23, 4, 14, 24, 5, 15, 6, 16, 7, 17, 8, 18, 26, 9, 19, 27, 10, 20), ]
+row.names(LSA5ATAC_summary2) <- 1: nrow(LSA5ATAC_summary2)
+
+LSA5ATAC_summary2$SAMPLE <- factor(LSA5ATAC_summary2$SAMPLE, levels=LSA5ATAC_summary2$SAMPLE)
+
+LSA5ATAC_summary2$TIMEPOINT <- c(rep("cycling", 3), rep("Quiescent", 3),rep("day3", 3),rep("day4", 3), rep("day6", 2), rep("day9", 2), rep("day12", 2), rep("day14", 3), rep("day21", 3), rep("day28", 2))
+
+LSA5ATAC_summary2$TIMEPOINT <- factor(LSA5ATAC_summary2$TIMEPOINT, levels=unique(LSA5ATAC_summary2$TIMEPOINT)) 
+
+LSA5ATAC_summary2$EXPERIMENT <- "LSA5"
+
+LSA5ATAC_summary2$DRUG <- "Palbociclib"
+
+LSA5ATAC_summary2$SEQUENCING_RUN <- "3-08-2021"
+```
+```{r}
+```{r}
+LSA5_total <- rbind(LSA5ATAC_summary, LSA5ATAC_summary2)
+LSA5_total[, 3] <- as.character(LSA5_total[, 3])
+LSA5_total[, 5] <- as.character(LSA5_total[, 5])
+LSA5_total[, 8] <- as.character(LSA5_total[, 8])
+LSA5_total[, 9] <- as.character(LSA5_total[, 9])
+LSA5_total[, 6] <- as.integer(gsub("%", "", LSA5_total[, 6]))
+```
+```{r}
+LSA5_total[, 3] <- as.integer(gsub("%", "", LSA5_total[, 3]))
+LSA5_total[, 5] <- as.integer(gsub("%", "", LSA5_total[, 5]))
+LSA5_total[, 6] <- as.integer(gsub("%", "", LSA5_total[, 6]))
+LSA5_total[, 8] <- as.integer(gsub("%", "", LSA5_total[, 8]))
+LSA5_total[, 9] <- as.integer(gsub("%", "", LSA5_total[, 9]))
+```
+```{r}
+LSA5_Mito_Reads <- ggplot(LSA5_total, aes(x=SAMPLE, y=PERCENT_MITOCHONDRIAL, fill=TIMEPOINT, label=PERCENT_MITOCHONDRIAL)) + geom_point(stat="identity")+
+  facet_wrap(~SEQUENCING_RUN)+
+  geom_bar(stat="identity")+
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90))+
+  xlab("Sample") + 
+  ylab("% Mitochondrial Reads") + 
+  ggtitle("LSA5 % Mitochondrial Reads for Palbociclib samples") +
+  theme(legend.title=element_blank(), legend.position = "bottom")
+```
+
+```{r}
+LSA5_TSS <- ggplot(LSA5_total, aes(x=SAMPLE, y=PEAK_INSERTIONS_TSS, colour=TIMEPOINT, label=PEAK_INSERTIONS_TSS))+
+  facet_wrap(~SEQUENCING_RUN)+
+  geom_bar(stat="identity")+
+  geom_text(position = position_jitter(width=0.15, height=0.15), check_overlap = T)+
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90))+
+  xlab("Sample") + 
+  ylab("") + 
+  ggtitle("LSA5 TSS Enrichment Scores for Palbociclib samples") +
+  theme(legend.title=element_blank(), legend.position = "bottom")
+```
+```{r}
+samples <-c("Cyc-1","Cyc-2","Cyc-3","D0-1","D0-2","D0-3","D3-1","D3-2","D3-3","D4-1","D4-2","D4-3","D6-1","D6-2","D6-3", "D9-1","D9-2","D12-1","D12-2","D14-1","D14-2","D14-3","D21-1","D21-2","D21-3","D28-1","D28-2")
+library_conc <- round(c(25.85562987, 0.531281536, 4.775156091, 5.426453577, 9.34334673, 1.576852761, 14.59451832, 6.173950981, 2.843506872, 9.451722194, 3.189976254, 0.206104686, 13.51725142, 10.50966746, 2.724299863, 14.98894943, 8.043064733, 9.242248425, 8.928501057, 6.616194258, 10.45040018, 2.44676457, 3.754466487, 7.469988978, 2.89366783, 5.316029059, 10.40227733), digits=2)
+timepoints <- c(rep("cycling", 3), rep("Quiescent", 3),rep("day3", 3),rep("day4", 3), rep("day6", 3), rep("day9", 2), rep("day12", 2), rep("day14", 3), rep("day21", 3), rep("day28", 2))
+timepoints <- factor(timepoints, levels=unique(timepoints))
+LSA5_Lib_Conc <- data.frame(SAMPLE=samples, nM=library_conc, TIMEPOINT=timepoints)
+
+Library_conc_plot <- ggplot(LSA5_Lib_Conc, aes(x=SAMPLE, y=nM, fill=TIMEPOINT, label=nM)) + geom_bar(stat="identity")+
+  geom_text(position = position_jitter(width=0.15, height=0.15), check_overlap = T)+
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90))+
+  xlab("Sample") + 
+  ylab("Library concentration in nM") + 
+  ggtitle("LSA5 Library Concentration for Palbociclib Samples- Dec 2019") +
+  theme(legend.title=element_blank(), legend.position = "bottom")
+```
+
+```
+```{r}
+LSA5_Estimated_Library_size <- ggplot(LSA5_total, aes(x=SAMPLE, y=ESTIMATED_LIBRARY_SIZE, colour=TIMEPOINT, label=ESTIMATED_LIBRARY_SIZE)) + geom_point(stat="identity")+
+  facet_wrap(~SEQUENCING_RUN)+
+  geom_text(position = position_jitter(width=0.15, height=0.15), check_overlap = T)+
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90))+
+  xlab("Sample") + 
+  ylab("") + 
+  ggtitle("LSA5 Estimated Library Size for Palbociclib samples") +
+  theme(legend.title=element_blank(), legend.position = "bottom")
+
+LSA5_Raw_Read_Pairs <- ggplot(LSA5_total, aes(x=SAMPLE, y=RAW_READ_PAIRS, colour=TIMEPOINT, label=RAW_READ_PAIRS)) + geom_point(stat="identity")+
+  facet_wrap(~SEQUENCING_RUN)+
+  geom_text(position = position_jitter(width=0.15, height=0.15), check_overlap = T)+
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90))+
+  xlab("Sample") + 
+  ylab("") + 
+  ggtitle("LSA5 Raw Read Pairs for Palbociclib Samples") +
+  theme(legend.title=element_blank(), legend.position = "bottom")
+```
